@@ -123,6 +123,7 @@
             Controls.Add(txtCode);
             Name = "Form1";
             Text = "Compiler Project";
+            Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)dgvTokens).EndInit();
             ResumeLayout(false);
             PerformLayout();
