@@ -40,22 +40,37 @@ namespace WinFormsApp1
                 dgvTokens.Rows.Add(token.Lexeme, token.Type);
             }
 
+            // Phase 2: Run the Parser
+            if (tokens.Count == 0) return;
+
+            try
+            {
+                MiniLParser parser = new MiniLParser(tokens);
+                parser.ParseProgram();
+                MessageBox.Show("Success: Your miniL code is correct!", "Success",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Syntax Error: " + ex.Message, "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
+
         List<Token> Scan(string code)
         {
             List<Token> tokens = new List<Token>();
 
             string pattern =
-            @"\/\*[\s\S]*?\*\/" + "|" +
-            "\"[^\"]*\"" + "|" +
-            @"\b(int|float|string|read|write|repeat|until|if|elseif|else|then|return|endl)\b" + "|" +
-            @"[a-zA-Z][a-zA-Z0-9]*" + "|" +
-            @"[0-9]+(\.[0-9]+)?" + "|" +
-            @":=" + "|" +
-            @"<>|<|>|=" + "|" +
-            @"&&|\|\|" + "|" +
-            @"[\+\-\*/]" + "|" +
-            @"[;,\(\)\{\}]";
+                @"\/\*[\s\S]*?\*\/" + "|" +
+                "\"[^\"]*\"" + "|" +
+                @"\b(num|text|check|otherwise|until|repeat|then)\b" + "|" +
+                @"[a-zA-Z][a-zA-Z0-9]*" + "|" +
+                @"[0-9]+(\.[0-9]+)?" + "|" +
+                @":=" + "|" +
+                @"==|!=|<>|<=|>=|<|>" + "|" +
+                @"[\+\-\*/]" + "|" +
+                @"[;,\(\)\{\}]";
 
             MatchCollection matches = Regex.Matches(code, pattern);
 
@@ -63,15 +78,19 @@ namespace WinFormsApp1
             {
                 string lexeme = m.Value;
                 string type = GetTokenType(lexeme);
-
+                if (type == "Comment") continue;
                 tokens.Add(new Token(lexeme, type));
             }
 
             return tokens;
         }
+
         string GetTokenType(string lexeme)
         {
-            if (Regex.IsMatch(lexeme, @"^(int|float|string|read|write|repeat|until|if|elseif|else|then|return|endl)$"))
+            if (Regex.IsMatch(lexeme, @"^\/\*[\s\S]*?\*\/$"))
+                return "Comment";
+
+            if (Regex.IsMatch(lexeme, @"^(num|text|check|otherwise|until|repeat|then)$"))
                 return "Keyword";
 
             if (Regex.IsMatch(lexeme, @"^[a-zA-Z][a-zA-Z0-9]*$"))
@@ -84,22 +103,29 @@ namespace WinFormsApp1
                 return "String";
 
             if (lexeme == ":=")
-                return "Assignment Operator";
+                return "Assignment_Op";
 
-            if (Regex.IsMatch(lexeme, @"^(<>|<|>|=)$"))
-                return "Condition Operator";
+            if (Regex.IsMatch(lexeme, @"^(==|!=|<>|<=|>=|<|>)$"))
+                return "Relational_Op";
 
-            if (Regex.IsMatch(lexeme, @"^(\&\&|\|\|)$"))
-                return "Boolean Operator";
+            if (lexeme == "+") return "Plus_Op";
+            if (lexeme == "-") return "Minus_Op";
+            if (lexeme == "*") return "Multiply_Op";
+            if (lexeme == "/") return "Divide_Op";
 
-            if (Regex.IsMatch(lexeme, @"^[\+\-\*/]$"))
-                return "Arithmetic Operator";
-
-            if (Regex.IsMatch(lexeme, @"^[;,\(\)\{\}]$"))
-                return "Symbol";
+            if (lexeme == ";") return "Semicolon";
+            if (lexeme == "(") return "Left_Paren";
+            if (lexeme == ")") return "Right_Paren";
+            if (lexeme == "{") return "Left_Brace";
+            if (lexeme == "}") return "Right_Brace";
+            if (lexeme == ",") return "Comma";
 
             return "Unknown";
         }
 
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }
